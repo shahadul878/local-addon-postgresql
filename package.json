@@ -7,12 +7,15 @@
   "license": "MIT",
   "main": "lib/main.js",
   "renderer": "lib/renderer.js",
+  "icon": "assets/icon.png",
+  "bgColor": "#173149",
   "engines": {
     "local-by-flywheel": ">=6.0.0",
     "node": ">=18"
   },
   "files": [
     "lib",
+    "assets/icon.png",
     "README.md",
     "LICENSE"
   ],

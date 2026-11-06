@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b77a8"/>
+      <stop offset="1" stop-color="#173149"/>
+    </linearGradient>
+    <linearGradient id="disc" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d6e4f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <rect x="6" y="6" width="244" height="244" rx="50" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+  <!-- three stacked database discs -->
+  <g fill="url(#disc)">
+    <path d="M60 164v22c0 13 30 24 68 24s68-11 68-24v-22c0 13-30 24-68 24s-68-11-68-24z"/>
+    <path d="M60 120v22c0 13 30 24 68 24s68-11 68-24v-22c0 13-30 24-68 24s-68-11-68-24z"/>
+    <path d="M60 76v22c0 13 30 24 68 24s68-11 68-24V76c0 13-30 24-68 24S60 89 60 76z"/>
+  </g>
+  <ellipse cx="128" cy="76" rx="68" ry="24" fill="#ffffff"/>
+  <ellipse cx="128" cy="76" rx="44" ry="13" fill="#173149" fill-opacity="0.18"/>
+  <!-- running indicator -->
+  <circle cx="198" cy="196" r="26" fill="#173149"/>
+  <circle cx="198" cy="196" r="17" fill="#3fcf8e"/>
+  <circle cx="192" cy="190" r="5" fill="#ffffff" fill-opacity="0.55"/>
+</svg>

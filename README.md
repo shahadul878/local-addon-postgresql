@@ -1,80 +1,73 @@
+<p align="center">
+  <img src="assets/thumbnail.png" alt="PostgreSQL for Local: a private PostgreSQL server for every site" width="100%">
+</p>
+
 # PostgreSQL for Local
 
-A [Local](https://localwp.com) add-on that installs, runs and manages a **PostgreSQL server for each site**. You don't need Docker, Homebrew or a system-wide install.
+A [Local](https://localwp.com) add-on that gives **each site its own PostgreSQL server**, installed and managed from Local's window. You don't need Docker, Homebrew or a system-wide install.
 
-- **One-click install.** Downloads a portable PostgreSQL build (14 – 18) and checks it against the published SHA-256 checksum, which catches corrupted downloads.
-- **One cluster per site.** Each site gets its own data directory, port, password and default `local` database.
-- **Follows the site.** PostgreSQL starts when the site starts and stops when it stops (you can turn this off per site). When Local quits, every server is stopped.
-- **Manage from Local.** The **Tools → PostgreSQL** tab has start/stop/restart, a port changer, connection details with copy buttons, a `DATABASE_URL` snippet, create/drop databases, the server log, and installed versions.
-- **Private by default.** Servers listen only on `127.0.0.1`, with unix sockets off and SCRAM-SHA-256 password auth.
+**[Read the full user guide →](docs/GUIDE.md)**
+
+## Features
+
+- **One-click install.** Downloads a portable PostgreSQL build (14 – 18) and checks it against the published SHA-256 checksum, which catches damaged downloads.
+- **One server per site.** Each site gets its own data folder, port, password and a default `local` database.
+- **Follows the site.** PostgreSQL starts and stops with the site (optional per site). Quitting Local stops every server.
+- **Manage it in Local.** **Tools → PostgreSQL** has start/stop/restart, a port changer, connection details with copy buttons, a `DATABASE_URL` line, create/drop databases, the server log and installed versions.
+- **Private by default.** Servers listen only on `127.0.0.1`, with Unix sockets off and SCRAM-SHA-256 passwords.
+- **Works on older Linux.** On systems like Ubuntu 22.04, bundled libraries that need a newer glibc are swapped for the system's own copies.
+
+> WordPress and Local's PHP don't use PostgreSQL. This add-on is for the apps and tools you run next to a site: Node, Python, Go or Laravel apps, headless front ends, scripts, and database GUIs.
+
+## Quick start
+
+1. Quit Local.
+2. Get the add-on and install it:
+
+   ```bash
+   git clone https://github.com/shahadul878/local-addon-postgresql.git
+   cd local-addon-postgresql
+   npm run install-addon
+   ```
+
+   No `npm install` is needed: the add-on has no runtime dependencies. Prefer clicking? Run `npm pack` and use **Add-ons → Installed → Install from disk** in Local ([details](docs/GUIDE.md#3-installing-the-add-on)).
+
+3. Start Local, open a site, go to **Tools → PostgreSQL** and click **Download & enable**.
+4. Copy the `DATABASE_URL` line into your app:
+
+   ```dotenv
+   DATABASE_URL=postgresql://postgres:<password>@127.0.0.1:5432/local
+   ```
 
 ## Requirements
 
 - Local 6 or newer (built and checked against Local 10.2)
-- Linux (x64/arm64) with glibc 2.34 or newer, e.g. Ubuntu 22.04+ or Debian 12+; macOS (Intel/Apple Silicon); or Windows 10+ (x64/arm64)
-- `tar` on the `PATH`. Linux and macOS have it, and Windows 10+ ships `tar.exe`.
+- Linux x64/arm64 with glibc 2.34+ (Ubuntu 22.04+, Debian 12+), macOS (Intel or Apple Silicon), or Windows 10+ (x64/arm64)
+- About 120 MB of disk per PostgreSQL version
 
-## Install
+## Guide
 
-1. Quit Local.
-2. From this folder, run:
-
-   ```bash
-   npm run install-addon
-   ```
-
-   This copies the add-on into Local's add-ons folder and marks it enabled:
-   - Linux: `~/.config/Local/addons/`
-   - macOS: `~/Library/Application Support/Local/addons/`
-   - Windows: `%APPDATA%\Local\addons\`
-
-3. Start Local, open a site, and go to **Tools → PostgreSQL**.
-
-During development, `npm run link-addon` symlinks the folder so your edits load on the next Local restart. To uninstall, run `npm run uninstall-addon`.
-
-## Using it
-
-1. Open a site → **Tools → PostgreSQL**.
-2. Choose a version and click **Download & enable**. The first download is about 40 MB.
-3. Copy the connection details, or the `DATABASE_URL` line, into your app:
-
-   ```
-   DATABASE_URL=postgresql://postgres:<password>@127.0.0.1:5432/local
-   ```
-
-   From a terminal:
-
-   ```bash
-   psql -h 127.0.0.1 -p 5432 -U postgres local
-   ```
-
-The first site gets port 5432 when it's free. Each later site gets the next free port, and no two sites ever share one.
-
-To move a site to another port (for example when another program has taken it), enter the new port under **Server** and click **Change port**. A running server restarts on the new port. Update your app's `DATABASE_URL` afterwards.
-
-## Where things live
-
-Everything is under Local's data folder in `postgresql/`:
-
-| Path | Contents |
+| Topic | |
 | --- | --- |
-| `config.json` | per-site port, user, password, version, auto-start |
-| `versions/<version>/` | PostgreSQL binaries, shared by all sites |
-| `sites/<siteId>/data/` | the site's cluster |
-| `sites/<siteId>/postgres.log` | server log |
-| `addon.log` | add-on activity and errors |
-
-Deleting a site in Local also stops and deletes its PostgreSQL cluster. **Remove PostgreSQL** in the tab does the same without deleting the site.
+| Installing, two ways | [Section 3](docs/GUIDE.md#3-installing-the-add-on) |
+| Connecting from apps, `psql` and GUI tools | [Section 5](docs/GUIDE.md#5-connecting-to-the-database) |
+| Start/stop, auto-start and changing the port | [Section 6](docs/GUIDE.md#6-running-the-server) |
+| Versions and running several sites | [Sections 8 – 9](docs/GUIDE.md#8-postgresql-versions) |
+| Backups with `pg_dump` (Local's Backups tab skips PostgreSQL) | [Section 10](docs/GUIDE.md#10-backups-and-moving-data) |
+| Troubleshooting | [Section 13](docs/GUIDE.md#13-troubleshooting) |
 
 ## Development
 
 ```bash
-npm install
+npm install                # test dependencies only (React 16.14, as shipped by Local)
 npm test
 npm run coverage
+npm run link-addon         # symlink into Local; restart Local to load edits
+npm run uninstall-addon
+scripts/render-assets.sh   # re-render assets/*.png from assets/src (needs Chrome)
 ```
 
-The add-on is plain CommonJS with no runtime dependencies and no build step. The React UI uses Local's own React instance, and the tests render it with React 16.14, the version Local ships.
+The add-on is plain CommonJS with no build step. The UI uses Local's own React instance.
 
 ```
 lib/
@@ -82,15 +75,15 @@ lib/
   renderer.js         renderer entry: adds the Tools → PostgreSQL tab
   postgresService.js  business logic used by IPC and lifecycle hooks
   binaryManager.js    download → verify → extract PostgreSQL builds
+  glibcCompat.js      swaps bundled Linux libraries that need a newer glibc
   instanceManager.js  initdb / pg_ctl / psql / createdb / dropdb per site
   configStore.js      atomic, serialised JSON settings store
   ipc.js              channel → service routing
   ui/                 panel container, sections, components, styles, IPC client
 ```
 
-## Notes
+PostgreSQL builds come from [theseus-rs/postgresql-binaries](https://github.com/theseus-rs/postgresql-binaries). Edit `SUPPORTED_VERSIONS` in `lib/constants.js` to offer other releases.
 
-- Binaries come from [theseus-rs/postgresql-binaries](https://github.com/theseus-rs/postgresql-binaries). Edit `SUPPORTED_VERSIONS` in `lib/constants.js` to offer other releases.
-- PostgreSQL refuses to run as root. Run Local as your normal user.
-- On Linux, a few libraries in the download can need a newer glibc than your system has (for example `libstdc++` on Ubuntu 22.04). When your system has its own copy, the add-on moves the bundled one into `versions/<version>/lib-disabled/` and PostgreSQL uses the system copy instead.
-- Passwords are random and stored in `config.json` (mode 0600) on your machine. They are never logged or passed on the command line.
+## License
+
+[MIT](LICENSE). PostgreSQL itself is distributed under the [PostgreSQL License](https://www.postgresql.org/about/licence/).

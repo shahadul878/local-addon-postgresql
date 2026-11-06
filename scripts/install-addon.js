@@ -16,7 +16,7 @@ const path = require('path');
 
 const PROJECT_DIR = path.resolve(__dirname, '..');
 const { name: ADDON_NAME } = require(path.join(PROJECT_DIR, 'package.json'));
-const SHIPPED_ENTRIES = ['package.json', 'lib', 'README.md', 'LICENSE'];
+const SHIPPED_ENTRIES = ['package.json', 'lib', 'assets/icon.png', 'README.md', 'LICENSE'];
 
 function localUserDataDir() {
   if (process.env.LOCAL_USER_DATA) {
