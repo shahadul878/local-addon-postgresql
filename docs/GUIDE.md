@@ -51,16 +51,16 @@ Run Local as your normal user, not as root or administrator. PostgreSQL refuses 
 
 Pick one of the two ways below. Both put the add-on in Local's add-ons folder.
 
-### Option A — Install from disk (no terminal needed after the build)
+### Option A — Install from disk (no terminal needed)
 
-1. Get an add-on archive (`local-addon-postgresql-<version>.tgz`). To build one yourself, download this repository and run, in its folder:
+1. Download `local-addon-postgresql-<version>.tgz` from the [latest release](https://github.com/shahadul878/local-addon-postgresql/releases/latest). Don't unpack it.
 
-   ```bash
-   npm pack
-   ```
+   To build the archive yourself instead, run `npm pack` in a copy of this repository.
 
 2. In Local, open **Add-ons** (the puzzle-piece icon) → **Installed** → **Install from disk**, and choose the `.tgz` file.
 3. Make sure the add-on's switch is on, then restart Local.
+
+   If Local says *Add-on already exists*, an older copy is installed. Remove it under **Add-ons → Installed** (or run `npm run uninstall-addon`), restart Local, and install again. Your sites' PostgreSQL data is kept.
 
 ### Option B — Install script (needs Node.js 18+)
 

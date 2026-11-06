@@ -21,23 +21,24 @@ A [Local](https://localwp.com) add-on that gives **each site its own PostgreSQL 
 
 ## Quick start
 
-1. Quit Local.
-2. Get the add-on and install it:
-
-   ```bash
-   git clone https://github.com/shahadul878/local-addon-postgresql.git
-   cd local-addon-postgresql
-   npm run install-addon
-   ```
-
-   No `npm install` is needed: the add-on has no runtime dependencies. Prefer clicking? Run `npm pack` and use **Add-ons → Installed → Install from disk** in Local ([details](docs/GUIDE.md#3-installing-the-add-on)).
-
-3. Start Local, open a site, go to **Tools → PostgreSQL** and click **Download & enable**.
+1. Download `local-addon-postgresql-<version>.tgz` from the [latest release](https://github.com/shahadul878/local-addon-postgresql/releases/latest).
+2. In Local, go to **Add-ons → Installed → Install from disk** and choose that file. Make sure the add-on is switched on, then restart Local.
+3. Open a site, go to **Tools → PostgreSQL** and click **Download & enable**.
 4. Copy the `DATABASE_URL` line into your app:
 
    ```dotenv
    DATABASE_URL=postgresql://postgres:<password>@127.0.0.1:5432/local
    ```
+
+Prefer the terminal? Quit Local, then:
+
+```bash
+git clone https://github.com/shahadul878/local-addon-postgresql.git
+cd local-addon-postgresql
+npm run install-addon
+```
+
+No `npm install` is needed: the add-on has no runtime dependencies. See [installing](docs/GUIDE.md#3-installing-the-add-on) for both ways.
 
 ## Requirements
 
