@@ -11,7 +11,7 @@ A [Local](https://localwp.com) add-on that installs, runs and manages a **Postgr
 ## Requirements
 
 - Local 6 or newer (built and checked against Local 10.2)
-- Linux (x64/arm64, glibc), macOS (Intel/Apple Silicon) or Windows 10+ (x64/arm64)
+- Linux (x64/arm64) with glibc 2.34 or newer, e.g. Ubuntu 22.04+ or Debian 12+; macOS (Intel/Apple Silicon); or Windows 10+ (x64/arm64)
 - `tar` on the `PATH`. Linux and macOS have it, and Windows 10+ ships `tar.exe`.
 
 ## Install
@@ -92,4 +92,5 @@ lib/
 
 - Binaries come from [theseus-rs/postgresql-binaries](https://github.com/theseus-rs/postgresql-binaries). Edit `SUPPORTED_VERSIONS` in `lib/constants.js` to offer other releases.
 - PostgreSQL refuses to run as root. Run Local as your normal user.
+- On Linux, a few libraries in the download can need a newer glibc than your system has (for example `libstdc++` on Ubuntu 22.04). When your system has its own copy, the add-on moves the bundled one into `versions/<version>/lib-disabled/` and PostgreSQL uses the system copy instead.
 - Passwords are random and stored in `config.json` (mode 0600) on your machine. They are never logged or passed on the command line.

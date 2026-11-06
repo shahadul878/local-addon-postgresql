@@ -15,7 +15,7 @@ const VERSION = '16.15.1';
 const GOOD_SHA = 'a'.repeat(64);
 
 /** Fake `tar -xzf <archive> -C <dir>` that produces the upstream folder layout. */
-function fakeTar({ withBin = true } = {}) {
+function fakeTar({ withBin = true, libs = {} } = {}) {
   return createFakeRunner(async (_file, args) => {
     const dest = args[args.indexOf('-C') + 1];
     const root = path.join(dest, getArchiveBaseName(VERSION, TRIPLE));
@@ -23,10 +23,12 @@ function fakeTar({ withBin = true } = {}) {
     if (withBin) {
       await fs.writeFile(path.join(root, 'bin', 'postgres'), '');
     }
+    await fs.mkdir(path.join(root, 'lib'), { recursive: true });
+    await Promise.all(Object.entries(libs).map(([name, content]) => fs.writeFile(path.join(root, 'lib', name), content)));
   });
 }
 
-async function setup({ sha = GOOD_SHA, runner = fakeTar(), triple = TRIPLE } = {}) {
+async function setup({ sha = GOOD_SHA, runner = fakeTar(), triple = TRIPLE, systemGlibc = null, systemLibDirs = [] } = {}) {
   const dir = await makeTempDir();
   const paths = createPaths(dir, 'linux');
   const downloads = [];
@@ -38,7 +40,7 @@ async function setup({ sha = GOOD_SHA, runner = fakeTar(), triple = TRIPLE } = {
   };
   const fetchText = async () => `${GOOD_SHA}  file.tar.gz\n`;
   const manager = createBinaryManager({
-    paths, triple, fs, downloadFile, fetchText, runCommand: runner.run, logger: createSilentLogger(),
+    paths, triple, fs, downloadFile, fetchText, runCommand: runner.run, logger: createSilentLogger(), systemGlibc, systemLibDirs,
   });
   return { dir, paths, manager, downloads, runner };
 }
@@ -114,4 +116,41 @@ test('uses the Windows system tar so GNU tar on PATH cannot misread drive letter
   assert.equal(resolveTar('linux'), 'tar');
   assert.equal(resolveTar('win32', { SystemRoot: 'D:\\Win' }), 'D:\\Win\\System32\\tar.exe');
   assert.equal(resolveTar('win32', {}), 'C:\\Windows\\System32\\tar.exe');
+});
+
+const NEEDS_NEWER_GLIBC = Buffer.from('\x7fELF\0GLIBC_2.17\0GLIBC_2.36\0', 'latin1');
+
+async function systemWithLibstdcxx() {
+  const systemDir = await makeTempDir();
+  await fs.writeFile(path.join(systemDir, 'libstdc++.so.6'), 'system copy');
+  return systemDir;
+}
+
+test('install uses the system copy of a bundled library that needs a newer glibc', async () => {
+  const systemDir = await systemWithLibstdcxx();
+  const { paths, manager } = await setup({
+    runner: fakeTar({ libs: { 'libstdc++.so.6': NEEDS_NEWER_GLIBC } }), systemGlibc: '2.35', systemLibDirs: [systemDir],
+  });
+
+  await manager.install(VERSION);
+
+  const lib = path.join(paths.versionDir(VERSION), 'lib', 'libstdc++.so.6');
+  await assert.rejects(fs.access(lib));
+  await fs.access(path.join(paths.versionDir(VERSION), 'lib-disabled', 'libstdc++.so.6'));
+});
+
+test('install repairs a version that was installed before the glibc check existed', async () => {
+  const { paths, manager } = await setup({ runner: fakeTar({ libs: { 'libstdc++.so.6': NEEDS_NEWER_GLIBC } }) });
+  await manager.install(VERSION);
+  const lib = path.join(paths.versionDir(VERSION), 'lib', 'libstdc++.so.6');
+  await fs.access(lib);
+
+  const repaired = createBinaryManager({
+    paths, triple: TRIPLE, fs, downloadFile: async () => assert.fail('must not download again'), fetchText: async () => '',
+    runCommand: async () => assert.fail('must not extract again'), logger: createSilentLogger(),
+    systemGlibc: '2.35', systemLibDirs: [await systemWithLibstdcxx()],
+  });
+  await repaired.install(VERSION);
+
+  await assert.rejects(fs.access(lib));
 });
