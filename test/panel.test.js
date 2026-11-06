@@ -40,6 +40,7 @@ function createFakeApi(initialSite) {
     stop: record('stop', () => { throw new Error('Could not stop.'); }),
     restart: record('restart'),
     setAutoStart: record('setAutoStart'),
+    setPort: record('setPort'),
     createDatabase: record('createDatabase'),
     dropDatabase: record('dropDatabase'),
     readLog: record('readLog', () => 'server log line'),
@@ -150,5 +151,42 @@ test('stopped servers hide database management', async () => {
   const { renderer } = await renderPanel({ ...enabledSite, status: STATUS.STOPPED });
   assert.ok(text(renderer.root).includes('Start the server to see and manage databases.'));
   assert.ok(findButton(renderer, 'Start'));
+  renderer.unmount();
+});
+
+const findPortInput = (renderer) => renderer.root.find((n) => n.type === 'input' && n.props['aria-label'] === 'New port');
+const typeInto = async (input, value) => act(async () => { input.props.onChange({ target: { value } }); });
+
+test('changes the port after confirmation', async () => {
+  const { renderer, calls } = await renderPanel(enabledSite);
+
+  await typeInto(findPortInput(renderer), '5440');
+  await click(findButton(renderer, 'Change port'));
+
+  assert.deepEqual(calls.at(-1), ['setPort', 'site1', 5440]);
+  renderer.unmount();
+});
+
+test('the Change port button is disabled for invalid or unchanged ports', async () => {
+  const { renderer } = await renderPanel(enabledSite);
+  const isDisabled = () => findButton(renderer, 'Change port').props.disabled;
+
+  assert.equal(isDisabled(), true, 'empty input');
+  for (const value of ['80', '70000', '54.5', 'abc', '5432']) {
+    await typeInto(findPortInput(renderer), value);
+    assert.equal(isDisabled(), true, `rejects ${value}`);
+  }
+  await typeInto(findPortInput(renderer), '5440');
+  assert.equal(isDisabled(), false);
+  renderer.unmount();
+});
+
+test('cancelling the port change confirmation does nothing', async () => {
+  const { renderer, calls } = await renderPanel(enabledSite, { confirmResult: false });
+
+  await typeInto(findPortInput(renderer), '5440');
+  await click(findButton(renderer, 'Change port'));
+
+  assert.equal(calls.some((c) => c[0] === 'setPort'), false);
   renderer.unmount();
 });

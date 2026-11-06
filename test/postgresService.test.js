@@ -71,7 +71,7 @@ function setup(options = {}) {
     binaries: fakes.binaries,
     instances: fakes.instances,
     findFreePort: async (reserved) => (reserved.has(5432) ? 5433 : 5432),
-    isPortFree: async () => fakes.portFree,
+    isPortFree: async (port) => (typeof fakes.portFree === 'function' ? fakes.portFree(port) : fakes.portFree),
     generatePassword: () => 'generated-pw',
     logger,
     now: () => new Date('2026-11-06T10:00:00Z'),
@@ -289,4 +289,89 @@ test('readLog returns the server log for an enabled site', async () => {
   const { service } = setup();
   await service.enableSite('site1', '17.11.1', noop);
   assert.equal(await service.readLog('site1'), 'log text');
+});
+
+test('setPort moves a running server to the new port and restarts it', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+
+  await service.setPort('site1', 5440);
+
+  assert.equal(store.snapshot().sites.site1.port, 5440);
+  assert.deepEqual(fakes.log.slice(-2), ['stop:site1', 'start:site1']);
+  assert.equal(fakes.running.has('site1'), true);
+});
+
+test('setPort on a stopped server saves the port without starting it', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  await service.stopSite('site1');
+
+  await service.setPort('site1', 5440);
+
+  assert.equal(store.snapshot().sites.site1.port, 5440);
+  assert.equal(fakes.running.has('site1'), false);
+});
+
+test('setPort to the current port changes nothing', async () => {
+  const { service, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  const before = fakes.log.length;
+
+  await service.setPort('site1', 5432);
+
+  assert.equal(fakes.log.length, before);
+});
+
+test('setPort refuses a port another Local site already has', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  await service.enableSite('site2', '17.11.1', noop);
+  await service.stopSite('site2');
+
+  await assert.rejects(service.setPort('site1', 5433), /Port 5433 is already assigned to another Local site/);
+  assert.equal(store.snapshot().sites.site1.port, 5432);
+  assert.equal(fakes.running.has('site1'), true);
+});
+
+test('setPort refuses a port another program is using and leaves the server running', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  fakes.portFree = (port) => port !== 5440;
+
+  await assert.rejects(service.setPort('site1', 5440), /Port 5440 is already in use by another program/);
+  assert.equal(store.snapshot().sites.site1.port, 5432);
+  assert.equal(fakes.running.has('site1'), true);
+});
+
+test('setPort validates the port and the site', async () => {
+  const { service } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+
+  await assert.rejects(service.setPort('site1', 80), /whole number between 1024 and 65535/);
+  await assert.rejects(service.setPort('site1', '5440'), /whole number/);
+  await assert.rejects(service.setPort('other', 5440), /not enabled/);
+});
+
+test('setPort puts a running server back on its old port when the new one fails to start', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  const realStart = fakes.instances.start;
+  fakes.instances.start = async (id, cfg) => {
+    if (cfg.port === 5440) throw new Error('pg_ctl failed');
+    return realStart(id, cfg);
+  };
+
+  await assert.rejects(service.setPort('site1', 5440), /Could not move PostgreSQL to port 5440: pg_ctl failed\. It is back on port 5432\./);
+  assert.equal(store.snapshot().sites.site1.port, 5432);
+  assert.equal(fakes.running.has('site1'), true);
+});
+
+test('setPort says so when the server cannot be restored either', async () => {
+  const { service, store, fakes } = setup();
+  await service.enableSite('site1', '17.11.1', noop);
+  fakes.instances.start = async () => { throw new Error('pg_ctl failed'); };
+
+  await assert.rejects(service.setPort('site1', 5440), /Could not move PostgreSQL to port 5440: pg_ctl failed\. Port 5432 was restored, but the server could not be restarted/);
+  assert.equal(store.snapshot().sites.site1.port, 5432);
 });

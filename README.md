@@ -5,7 +5,7 @@ A [Local](https://localwp.com) add-on that installs, runs and manages a **Postgr
 - **One-click install.** Downloads a portable PostgreSQL build (14 – 18) and checks it against the published SHA-256 checksum, which catches corrupted downloads.
 - **One cluster per site.** Each site gets its own data directory, port, password and default `local` database.
 - **Follows the site.** PostgreSQL starts when the site starts and stops when it stops (you can turn this off per site). When Local quits, every server is stopped.
-- **Manage from Local.** The **Tools → PostgreSQL** tab has start/stop/restart, connection details with copy buttons, a `DATABASE_URL` snippet, create/drop databases, the server log, and installed versions.
+- **Manage from Local.** The **Tools → PostgreSQL** tab has start/stop/restart, a port changer, connection details with copy buttons, a `DATABASE_URL` snippet, create/drop databases, the server log, and installed versions.
 - **Private by default.** Servers listen only on `127.0.0.1`, with unix sockets off and SCRAM-SHA-256 password auth.
 
 ## Requirements
@@ -48,7 +48,9 @@ During development, `npm run link-addon` symlinks the folder so your edits load 
    psql -h 127.0.0.1 -p 5432 -U postgres local
    ```
 
-The first site gets port 5432 when it's free. Each later site gets the next free port.
+The first site gets port 5432 when it's free. Each later site gets the next free port, and no two sites ever share one.
+
+To move a site to another port (for example when another program has taken it), enter the new port under **Server** and click **Change port**. A running server restarts on the new port. Update your app's `DATABASE_URL` afterwards.
 
 ## Where things live
 

@@ -69,6 +69,15 @@ test('renderer API round-trips through IPC, streams progress, and shows clean er
   assert.equal(logger.entries.at(-1).level, 'error');
 });
 
+test('renderer setPort reaches the service with the site and port', async () => {
+  const { ipcMain, ipcRenderer } = createFakeIpc();
+  const received = [];
+  registerIpcHandlers(ipcMain, { setPort: async (...args) => { received.push(args); } }, createSilentLogger());
+
+  assert.equal(await createApi(ipcRenderer).setPort('abc', 5440), null);
+  assert.deepEqual(received, [['abc', 5440]]);
+});
+
 test('IPC handlers reject a missing payload', async () => {
   const { ipcRenderer, ipcMain } = createFakeIpc();
   registerIpcHandlers(ipcMain, { getState: async () => ({}) }, createSilentLogger());
