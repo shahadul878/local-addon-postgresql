@@ -1,0 +1,30 @@
+{
+  "name": "local-addon-postgresql",
+  "productName": "PostgreSQL",
+  "version": "1.0.0",
+  "description": "Install, run and manage a PostgreSQL server for each Local site.",
+  "author": "Shahadul",
+  "license": "MIT",
+  "main": "lib/main.js",
+  "renderer": "lib/renderer.js",
+  "engines": {
+    "local-by-flywheel": ">=6.0.0",
+    "node": ">=18"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"test/**\" \"test/**/*.test.js\"",
+    "install-addon": "node scripts/install-addon.js",
+    "link-addon": "node scripts/install-addon.js --link",
+    "uninstall-addon": "node scripts/install-addon.js --remove"
+  },
+  "devDependencies": {
+    "react": "16.14.0",
+    "react-test-renderer": "16.14.0"
+  }
+}
